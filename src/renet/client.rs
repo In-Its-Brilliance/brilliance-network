@@ -140,7 +140,7 @@ impl IClientNetwork for RenetClientNetwork {
                     } => ServerMessages::ChunkSectionInfo {
                         world_slug,
                         chunk_position,
-                        sections: ChunkData::decode_zip(encoded).unwrap(),
+                        sections: ChunkData::decompress(encoded).unwrap(),
                     },
                     _ => decoded,
                 };

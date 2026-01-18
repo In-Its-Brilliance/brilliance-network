@@ -482,6 +482,7 @@ dependencies = [
  "strum_macros 0.26.4",
  "typetag",
  "zip",
+ "zstd",
 ]
 
 [[package]]
