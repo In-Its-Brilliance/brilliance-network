@@ -157,6 +157,10 @@ impl IServerNetwork<RenetServerConnection> for RenetServerNetwork {
     fn is_connected(&self, connection: &RenetServerConnection) -> bool {
         self.get_server().is_connected(connection.get_client_id())
     }
+
+    fn connections_count(&self) -> usize {
+        self.get_server().connected_clients()
+    }
 }
 
 #[derive(Clone)]

@@ -11,6 +11,7 @@ pub trait IServerNetwork<C: IServerConnection> {
     fn drain_connections(&self) -> impl Iterator<Item = ConnectionMessages<C>>;
     fn drain_errors(&self) -> impl Iterator<Item = String>;
     fn is_connected(&self, connection: &C) -> bool;
+    fn connections_count(&self) -> usize;
 }
 
 pub enum ConnectionMessages<C: IServerConnection> {
