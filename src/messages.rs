@@ -7,6 +7,7 @@ use common::chunks::rotation::Rotation;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
 use strum_macros::Display;
+use strum_macros::AsRefStr;
 
 use crate::entities::entity_tag::EntityTag;
 use crate::entities::{EntityNetworkComponent, EntitySkin};
@@ -57,7 +58,8 @@ pub struct ResurceScheme {
 pub type NetworkEntityTag = EntityTag;
 pub type NetworkEntitySkin = EntitySkin;
 
-#[derive(Debug, Serialize, Deserialize, Clone, Display)]
+#[derive(Debug, Serialize, Deserialize, Clone, Display, AsRefStr)]
+#[strum(serialize_all = "kebab-case")]
 pub enum ServerMessages {
     AllowConnection,
     ConsoleOutput {
