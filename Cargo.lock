@@ -4037,3 +4037,7 @@ dependencies = [
  "cc",
  "pkg-config",
 ]
+
+[[patch.unused]]
+name = "physics"
+version = "0.1.0"
