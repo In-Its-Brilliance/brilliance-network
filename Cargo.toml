@@ -19,7 +19,6 @@ common-git = {
     git = "https://github.com/In-Its-Brilliance/brilliance-common",
     package = "common",
     optional = true,
-    features = ["use-git"],
 }
 
 serde = { version = "1.0", features = ["derive"] }
