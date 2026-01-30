@@ -1,23 +1,25 @@
 use flume::{Receiver, Sender};
+use renet::{RenetServer, ServerEvent};
 use renet_netcode::{NetcodeServerTransport, ServerAuthentication, ServerConfig};
+use socket2::{Domain, Protocol, Socket, Type};
 use std::{
     collections::HashMap,
-    net::UdpSocket,
-    sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
+    net::{SocketAddr, UdpSocket},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc, RwLock, RwLockReadGuard, RwLockWriteGuard,
+    },
     time::{Duration, SystemTime},
 };
 use strum::IntoEnumIterator;
 
-use renet::{RenetServer, ServerEvent};
-
-use crate::{
-    messages::{ClientMessages, NetworkMessageType, ServerMessages},
-    server::{ConnectionMessages, IServerConnection, IServerNetwork},
-};
-
 use super::{
     channels::{ClientChannel, ServerChannel},
     connection_config, PROTOCOL_ID,
+};
+use crate::{
+    messages::{ClientMessages, NetworkMessageType, ServerMessages},
+    server::{ConnectionMessages, IServerConnection, IServerNetwork},
 };
 
 type ServerLock = Arc<RwLock<RenetServer>>;
@@ -65,7 +67,16 @@ impl IServerNetwork<RenetServerConnection> for RenetServerNetwork {
     async fn new(ip_port: String) -> Self {
         let server = RenetServer::new(connection_config());
 
-        let socket: UdpSocket = UdpSocket::bind(ip_port.as_str()).unwrap();
+        let addr: SocketAddr = ip_port.parse().unwrap();
+
+        let socket2 = Socket::new(Domain::IPV4, Type::DGRAM, Some(Protocol::UDP)).unwrap();
+        socket2.set_send_buffer_size(8 * 1024 * 1024).unwrap();
+        socket2.set_recv_buffer_size(8 * 1024 * 1024).unwrap();
+        socket2.set_nonblocking(true).unwrap();
+        socket2.bind(&addr.into()).unwrap();
+
+        let socket: UdpSocket = socket2.into();
+
         let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
         let server_config = ServerConfig {
             current_time,
@@ -113,13 +124,6 @@ impl IServerNetwork<RenetServerConnection> for RenetServerNetwork {
             }
         }
 
-        connections.retain(|_key, c| {
-            if *c.is_to_disconnect() {
-                server.disconnect(c.get_client_id());
-            }
-            !c.is_to_disconnect()
-        });
-
         while let Some(event) = server.get_event() {
             match event {
                 ServerEvent::ClientConnected { client_id } => {
@@ -143,6 +147,13 @@ impl IServerNetwork<RenetServerConnection> for RenetServerNetwork {
         }
 
         transport.send_packets(&mut server);
+
+        connections.retain(|_key, c| {
+            if c.is_to_disconnect() {
+                server.disconnect(c.get_client_id());
+            }
+            !c.is_to_disconnect()
+        });
         log::trace!(target: "network", "network step (executed:{:.2?})", delta);
     }
 
@@ -155,6 +166,9 @@ impl IServerNetwork<RenetServerConnection> for RenetServerNetwork {
     }
 
     fn is_connected(&self, connection: &RenetServerConnection) -> bool {
+        if connection.is_to_disconnect() {
+            return false;
+        }
         self.get_server().is_connected(connection.get_client_id())
     }
 
@@ -168,7 +182,7 @@ pub struct RenetServerConnection {
     server: ServerLock,
     client_id: u64,
     ip: String,
-    to_disconnect: bool,
+    disconnect_at: Arc<RwLock<Option<std::time::Instant>>>,
 
     channel_client_messages: (Sender<ClientMessages>, Receiver<ClientMessages>),
 }
@@ -179,14 +193,18 @@ impl RenetServerConnection {
             server,
             client_id,
             ip,
-            to_disconnect: false,
+            disconnect_at: Arc::new(RwLock::new(None)),
 
             channel_client_messages: flume::unbounded(),
         }
     }
 
-    fn is_to_disconnect(&self) -> &bool {
-        &self.to_disconnect
+    fn is_to_disconnect(&self) -> bool {
+        if let Some(time) = *self.disconnect_at.read().unwrap() {
+            std::time::Instant::now() >= time
+        } else {
+            false
+        }
     }
 }
 
@@ -213,7 +231,11 @@ impl IServerConnection for RenetServerConnection {
         self.channel_client_messages.1.drain()
     }
 
-    fn disconnect(&mut self) {
-        self.to_disconnect = true;
+    fn disconnect(&self) {
+        // Отключить через 200ms, чтобы сообщение успело уйти
+        let mut disconnect_at = self.disconnect_at.write().unwrap();
+        if disconnect_at.is_none() {
+            *disconnect_at = Some(std::time::Instant::now() + Duration::from_millis(200));
+        }
     }
 }

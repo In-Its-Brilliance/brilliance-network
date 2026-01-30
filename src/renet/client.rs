@@ -4,6 +4,7 @@ use parking_lot::RwLockReadGuard;
 use parking_lot::{RwLock, RwLockWriteGuard};
 use renet::RenetClient;
 use renet_netcode::{ClientAuthentication, NetcodeClientTransport};
+use socket2::{Domain, Protocol, Socket, Type};
 use std::{net::UdpSocket, sync::Arc, time::SystemTime};
 use strum::IntoEnumIterator;
 
@@ -82,12 +83,23 @@ impl IClientNetwork for RenetClientNetwork {
             protocol_id: PROTOCOL_ID,
         };
 
-        let socket = match UdpSocket::bind("0.0.0.0:0") {
-            Ok(s) => s,
-            Err(e) => {
-                return Err(format!("Path {} error: {}", ip_port, e));
-            }
-        };
+        let socket2 = Socket::new(Domain::IPV4, Type::DGRAM, Some(Protocol::UDP))
+            .map_err(|e| format!("Socket create error: {e}"))?;
+        socket2
+            .set_send_buffer_size(8 * 1024 * 1024)
+            .map_err(|e| format!("Set send buffer error: {e}"))?;
+        socket2
+            .set_recv_buffer_size(8 * 1024 * 1024)
+            .map_err(|e| format!("Set recv buffer error: {e}"))?;
+        socket2
+            .set_nonblocking(true)
+            .map_err(|e| format!("Set nonblocking error: {e}"))?;
+        socket2
+            .bind(&"0.0.0.0:0".parse::<std::net::SocketAddr>().unwrap().into())
+            .map_err(|e| format!("Bind error: {e}"))?;
+
+        let socket: UdpSocket = socket2.into();
+
         let transport = NetcodeClientTransport::new(current_time, authentication, socket).unwrap();
         let network = Self {
             client: Arc::new(RwLock::new(client)),
