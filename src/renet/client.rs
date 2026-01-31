@@ -1,4 +1,5 @@
 use common::chunks::chunk_data::ChunkData;
+use common::utils::debug::info::DebugInfo;
 use flume::{Drain, Receiver, Sender};
 use parking_lot::RwLockReadGuard;
 use parking_lot::{RwLock, RwLockWriteGuard};
@@ -11,7 +12,7 @@ use strum::IntoEnumIterator;
 use crate::client::{resolve_connect_domain, IClientNetwork};
 use crate::messages::ClientMessages;
 use crate::messages::NetworkMessageType;
-use crate::{client::NetworkInfo, messages::ServerMessages};
+use crate::messages::ServerMessages;
 
 use super::channels::ServerChannel;
 use super::{connection_config, PROTOCOL_ID};
@@ -26,7 +27,7 @@ pub struct RenetClientNetwork {
     client: ClientLock,
     transport: TransferLock,
 
-    network_info: Arc<RwLock<NetworkInfo>>,
+    debug_info: Arc<RwLock<DebugInfo>>,
 
     network_decoder_out: (Sender<ServerMessages>, Receiver<ServerMessages>),
     network_errors_out: (Sender<String>, Receiver<String>),
@@ -105,7 +106,7 @@ impl IClientNetwork for RenetClientNetwork {
             client: Arc::new(RwLock::new(client)),
             transport: Arc::new(RwLock::new(transport)),
 
-            network_info: Arc::new(RwLock::new(Default::default())),
+            debug_info: Arc::new(RwLock::new(Default::default())),
             network_decoder_out: flume::unbounded(),
             network_errors_out: flume::unbounded(),
             network_client_sended: flume::unbounded(),
@@ -121,11 +122,12 @@ impl IClientNetwork for RenetClientNetwork {
         }
 
         {
-            let mut network_info = self.network_info.write();
-            network_info.is_disconnected = client.is_disconnected();
-            network_info.bytes_received_per_sec = client.bytes_received_per_sec();
-            network_info.bytes_sent_per_sec = client.bytes_sent_per_sec();
-            network_info.packet_loss = client.packet_loss();
+            let mut debug_info = self.debug_info.write();
+            *debug_info = DebugInfo::new()
+                .insert("is_connected", !client.is_disconnected())
+                .insert("bytes_received_per_sec", client.bytes_received_per_sec())
+                .insert("bytes_sent_per_sec", client.bytes_sent_per_sec())
+                .insert("packet_loss", client.packet_loss());
         }
 
         client.update(delta);
@@ -198,7 +200,7 @@ impl IClientNetwork for RenetClientNetwork {
         }
     }
 
-    fn get_network_info(&self) -> RwLockReadGuard<'_, NetworkInfo> {
-        self.network_info.read()
+    fn get_debug_info(&self) -> RwLockReadGuard<'_, DebugInfo> {
+        self.debug_info.read()
     }
 }

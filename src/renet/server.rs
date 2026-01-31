@@ -5,10 +5,7 @@ use socket2::{Domain, Protocol, Socket, Type};
 use std::{
     collections::HashMap,
     net::{SocketAddr, UdpSocket},
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc, RwLock, RwLockReadGuard, RwLockWriteGuard,
-    },
+    sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
     time::{Duration, SystemTime},
 };
 use strum::IntoEnumIterator;

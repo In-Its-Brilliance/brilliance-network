@@ -1,5 +1,5 @@
 use crate::{
-    client::{IClientNetwork, NetworkInfo},
+    client::IClientNetwork,
     messages::{ClientMessages, NetworkMessageType, ServerMessages},
 };
 
@@ -34,7 +34,7 @@ impl IClientNetwork for TokioClient {
         todo!()
     }
 
-    fn get_network_info(&self) -> parking_lot::RwLockReadGuard<'_, NetworkInfo> {
+    fn get_network_info(&self) -> parking_lot::RwLockReadGuard<'_, DebugInfo> {
         todo!()
     }
 }

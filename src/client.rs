@@ -1,6 +1,7 @@
 #![allow(opaque_hidden_inferred_bound)]
 
 use super::messages::{ClientMessages, NetworkMessageType, ServerMessages};
+use common::utils::debug::info::DebugInfo;
 use flume::Drain;
 use parking_lot::RwLockReadGuard;
 use std::{future::Future, net::SocketAddr, time::Duration};
@@ -8,14 +9,6 @@ use trust_dns_resolver::{
     config::{ResolverConfig, ResolverOpts},
     TokioAsyncResolver,
 };
-
-#[derive(Default, Clone)]
-pub struct NetworkInfo {
-    pub is_disconnected: bool,
-    pub bytes_received_per_sec: f64,
-    pub bytes_sent_per_sec: f64,
-    pub packet_loss: f64,
-}
 
 pub trait IClientNetwork: Sized {
     fn new(ip_port: String) -> impl Future<Output = Result<Self, String>>;
@@ -30,7 +23,7 @@ pub trait IClientNetwork: Sized {
 
     fn send_message(&self, message_type: NetworkMessageType, message: &ClientMessages);
 
-    fn get_network_info(&self) -> RwLockReadGuard<'_, NetworkInfo>;
+    fn get_debug_info(&self) -> RwLockReadGuard<'_, DebugInfo>;
 }
 
 pub async fn resolve_connect_domain(input: &String, default_port: u16) -> Result<SocketAddr, String> {
