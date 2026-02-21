@@ -1,4 +1,3 @@
-use common::chunks::chunk_data::ChunkData;
 use common::utils::debug::info::DebugInfo;
 use flume::{Drain, Receiver, Sender};
 use parking_lot::RwLockReadGuard;
@@ -60,7 +59,7 @@ impl RenetClientNetwork {
             NetworkMessageType::ReliableOrdered => ServerChannel::ReliableOrdered,
             NetworkMessageType::ReliableUnordered => ServerChannel::ReliableUnordered,
             NetworkMessageType::Unreliable => ServerChannel::Unreliable,
-            NetworkMessageType::WorldInfo => ServerChannel::ReliableOrdered,
+            NetworkMessageType::WorldInfo => ServerChannel::World,
         }
     }
 }
@@ -137,6 +136,16 @@ impl IClientNetwork for RenetClientNetwork {
             return false;
         }
 
+        // Отправляем исходящие сообщения (PlayerMove и т.д.) ДО декомпрессии чанков,
+        // чтобы они не задерживались тяжёлой обработкой входящих данных.
+        for (channel, message) in self.network_client_sended.1.drain() {
+            client.send_message(channel, message);
+        }
+
+        if let Err(e) = transport.send_packets(&mut client) {
+            self.send_network_error(e.to_string());
+        }
+
         for channel_type in ServerChannel::iter() {
             while let Some(server_message) = client.receive_message(channel_type) {
                 let decoded: ServerMessages = match bincode::deserialize(&server_message) {
@@ -146,28 +155,8 @@ impl IClientNetwork for RenetClientNetwork {
                         continue;
                     }
                 };
-                let decoded = match decoded {
-                    ServerMessages::ChunkSectionInfoEncoded {
-                        world_slug,
-                        chunk_position,
-                        encoded,
-                    } => ServerMessages::ChunkSectionInfo {
-                        world_slug,
-                        chunk_position,
-                        sections: ChunkData::decompress(encoded).unwrap(),
-                    },
-                    _ => decoded,
-                };
                 self.network_decoder_out.0.send(decoded).unwrap();
             }
-        }
-
-        for (channel, message) in self.network_client_sended.1.drain() {
-            client.send_message(channel, message);
-        }
-
-        if let Err(e) = transport.send_packets(&mut client) {
-            self.send_network_error(e.to_string());
         }
         log::trace!(target: "network", "network step (executed:{:.2?})", delta);
         return true;
