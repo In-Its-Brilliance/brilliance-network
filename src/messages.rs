@@ -134,6 +134,8 @@ pub enum ServerMessages {
         id: u32,
         position: Vector3,
         rotation: Rotation,
+        /// Server time in seconds since startup
+        timestamp: f32,
     },
 
     EditBlock {

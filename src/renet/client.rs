@@ -1,4 +1,4 @@
-use common::utils::debug::info::DebugInfo;
+use common::utils::debug::info::{DebugInfo, DebugValue};
 use flume::{Drain, Receiver, Sender};
 use parking_lot::RwLockReadGuard;
 use parking_lot::{RwLock, RwLockWriteGuard};
@@ -121,9 +121,20 @@ impl IClientNetwork for RenetClientNetwork {
         }
 
         {
+            let rtt_ms = client.rtt() * 1000.0;
+            let ping_color = match rtt_ms {
+                ms if ms < 20.0 => "&a",
+                ms if ms < 50.0 => "&e",
+                ms if ms < 80.0 => "&o",
+                ms if ms < 120.0 => "&s",
+                ms if ms < 200.0 => "&c",
+                _ => "&4",
+            };
+            let rtt_duration = std::time::Duration::from_secs_f64(client.rtt());
             let mut debug_info = self.debug_info.write();
             *debug_info = DebugInfo::new()
                 .insert("is_connected", !client.is_disconnected())
+                .insert("ping", DebugValue::from(rtt_duration).with_color(ping_color))
                 .insert("bytes_received_per_sec", client.bytes_received_per_sec())
                 .insert("bytes_sent_per_sec", client.bytes_sent_per_sec())
                 .insert("packet_loss", client.packet_loss());
