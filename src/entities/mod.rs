@@ -1,16 +1,17 @@
-use entity_tag::EntityTag;
+use entity_tag::EntityTagData;
 use serde::{Deserialize, Serialize};
 
 pub mod entity_tag;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum EntitySkin {
+pub enum EntitySkinData {
     Generic,
     Fixed(String),
+    None,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum EntityNetworkComponent {
-    Tag(Option<EntityTag>),
-    Skin(Option<EntitySkin>),
+    Tag(Option<EntityTagData>),
+    Skin(EntitySkinData),
 }

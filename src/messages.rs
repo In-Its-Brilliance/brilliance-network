@@ -6,11 +6,10 @@ use common::chunks::position::Vector3;
 use common::chunks::rotation::Rotation;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
-use strum_macros::Display;
 use strum_macros::AsRefStr;
+use strum_macros::Display;
 
-use crate::entities::entity_tag::EntityTag;
-use crate::entities::{EntityNetworkComponent, EntitySkin};
+use crate::entities::EntityNetworkComponent;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Display)]
 pub enum ClientMessages {
@@ -54,9 +53,6 @@ pub struct ResurceScheme {
     // Hash: name
     pub media: HashMap<String, String>,
 }
-
-pub type NetworkEntityTag = EntityTag;
-pub type NetworkEntitySkin = EntitySkin;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Display, AsRefStr)]
 #[strum(serialize_all = "kebab-case")]
