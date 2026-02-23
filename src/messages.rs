@@ -9,7 +9,7 @@ use std::collections::{BTreeMap, HashMap};
 use strum_macros::AsRefStr;
 use strum_macros::Display;
 
-use crate::entities::EntityNetworkComponent;
+use crate::entities::{AnimationState, EntityNetworkComponent};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Display)]
 pub enum ClientMessages {
@@ -25,6 +25,7 @@ pub enum ClientMessages {
     PlayerMove {
         position: Vector3,
         rotation: Rotation,
+        animation_state: AnimationState,
     },
     ChunkRecieved {
         chunk_positions: Vec<ChunkPosition>,
@@ -130,8 +131,9 @@ pub enum ServerMessages {
         id: u32,
         position: Vector3,
         rotation: Rotation,
+        animation_state: AnimationState,
         /// Server time in seconds since startup
-        timestamp: f32,
+        timestamp: f64,
     },
 
     EditBlock {

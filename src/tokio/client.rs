@@ -214,9 +214,7 @@ impl IClientNetwork for TokioClient {
     }
 
     fn disconnect(&self) {
-        if self.connected.swap(false, Ordering::SeqCst) {
-            log::info!(target: "network", "Disconnected from the server");
-        }
+        self.connected.swap(false, Ordering::SeqCst);
     }
 
     fn send_message(&self, _message_type: NetworkMessageType, message: &ClientMessages) {

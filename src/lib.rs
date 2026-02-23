@@ -2,6 +2,7 @@ pub mod messages;
 pub mod client;
 pub mod server;
 pub mod entities;
+pub mod interpolation;
 
 #[cfg(feature = "network-renet")]
 pub mod renet;
