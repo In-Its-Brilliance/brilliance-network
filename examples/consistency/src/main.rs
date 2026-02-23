@@ -147,7 +147,7 @@ async fn run_server(args: Args) {
 
         let elapsed = tick_start.elapsed();
         if elapsed < tick_duration {
-            tokio::time::sleep(tick_duration - elapsed).await;
+            std::thread::sleep(tick_duration - elapsed);
         }
     }
 

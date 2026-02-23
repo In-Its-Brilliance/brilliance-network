@@ -139,6 +139,10 @@ pub enum ServerMessages {
         position: BlockPosition,
         new_block_info: Option<BlockDataInfo>,
     },
+
+    ServerStatus {
+        tps: f32,
+    },
 }
 
 pub enum NetworkMessageType {
