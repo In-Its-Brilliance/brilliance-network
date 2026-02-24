@@ -79,6 +79,7 @@ pub enum ServerMessages {
     Settings {
         block_types: Vec<BlockType>,
         block_id_map: BTreeMap<BlockIndexType, String>,
+        chunks_distance: u16,
     },
 
     SpawnWorld {
