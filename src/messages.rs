@@ -81,6 +81,9 @@ pub enum InventoryAction {
         slot: u16,
         amount: u16,
     },
+    Close {
+        inventory: InventoryType,
+    },
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -197,10 +200,12 @@ pub struct InventorySlotChange {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum InventoryStream {
+    // Not sended in case of PlayerPersonal, its always streaming to the player
     StartStream {
         inventory_type: InventoryType,
         inventory: ClientInventory,
     },
+    // Not sended in case of PlayerPersonal, its always streaming to the player
     StopStream {
         inventory_type: InventoryType,
     },
