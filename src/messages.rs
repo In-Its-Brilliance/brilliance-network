@@ -1,9 +1,12 @@
 use common::blocks::block_type::BlockType;
 use common::chunks::block_position::BlockPosition;
-use common::chunks::chunk_data::{BlockDataInfo, BlockIndexType, ChunkData};
+use common::chunks::chunk_data::BlockDataInfo;
+use common::chunks::chunk_data::{BlockIndexType, ChunkData};
 use common::chunks::chunk_position::ChunkPosition;
 use common::chunks::position::Vector3;
 use common::chunks::rotation::Rotation;
+use common::inventory::inventory::{ClientInventory, InventoryType};
+use common::inventory::item::ClientItem;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
 use strum_macros::AsRefStr;
@@ -30,10 +33,10 @@ pub enum ClientMessages {
     ChunkRecieved {
         chunk_positions: Vec<ChunkPosition>,
     },
-    EditBlockRequest {
-        world_slug: String,
-        position: BlockPosition,
-        new_block_info: Option<BlockDataInfo>,
+    ClientScriptEvent {
+        script_slug: String,
+        slug: String,
+        json: String,
     },
     ResourcesHasCache {
         exists: bool,
@@ -42,6 +45,42 @@ pub enum ClientMessages {
         last_index: u32,
     },
     SettingsLoaded,
+
+    InventoryAction(InventoryAction),
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub enum InventoryAction {
+    Move {
+        from_inventory: InventoryType,
+        from_slot: u16,
+
+        to_inventory: InventoryType,
+        to_slot: u16,
+
+        amount: u16,
+    },
+    Swap {
+        a_inventory: InventoryType,
+        a_slot: u16,
+
+        b_inventory: InventoryType,
+        b_slot: u16,
+    },
+    Split {
+        from_inventory: InventoryType,
+        from_slot: u16,
+
+        to_inventory: InventoryType,
+        to_slot: u16,
+
+        amount: u16,
+    },
+    Drop {
+        inventory: InventoryType,
+        slot: u16,
+        amount: u16,
+    },
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -145,6 +184,29 @@ pub enum ServerMessages {
 
     ServerStatus {
         tps: f32,
+    },
+
+    InventoryStream(InventoryStream),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InventorySlotChange {
+    pub slot: usize,
+    pub item: Option<ClientItem>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum InventoryStream {
+    StartStream {
+        inventory_type: InventoryType,
+        inventory: ClientInventory,
+    },
+    StopStream {
+        inventory_type: InventoryType,
+    },
+    UpdateSlots {
+        inventory_type: InventoryType,
+        changes: Vec<InventorySlotChange>,
     },
 }
 
