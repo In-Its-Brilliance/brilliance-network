@@ -61,7 +61,9 @@ impl RenetServerNetwork {
 }
 
 impl IServerNetwork<RenetServerConnection> for RenetServerNetwork {
-    async fn new(ip_port: String) -> Self {
+    type Error = String;
+
+    async fn new(ip_port: String) -> Result<Self, Self::Error> {
         let server = RenetServer::new(connection_config());
 
         let addr: SocketAddr = ip_port.parse().unwrap();
@@ -91,7 +93,7 @@ impl IServerNetwork<RenetServerConnection> for RenetServerNetwork {
             channel_connections: flume::unbounded(),
             channel_errors: flume::unbounded(),
         };
-        network
+        Ok(network)
     }
 
     async fn step(&self, delta: Duration) {

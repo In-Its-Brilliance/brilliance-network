@@ -4,8 +4,10 @@ use std::{future::Future, time::Duration};
 
 use super::messages::{ClientMessages, NetworkMessageType, ServerMessages};
 
-pub trait IServerNetwork<C: IServerConnection> {
-    fn new(ip_port: String) -> impl Future<Output = Self>;
+pub trait IServerNetwork<C: IServerConnection>: Sized {
+    type Error;
+
+    fn new(ip_port: String) -> impl Future<Output = Result<Self, Self::Error>>;
     fn step(&self, delta: Duration) -> impl Future<Output = ()>;
 
     fn drain_connections(&self) -> impl Iterator<Item = ConnectionMessages<C>>;
@@ -25,4 +27,5 @@ pub trait IServerConnection: Clone {
     fn drain_client_messages(&self) -> impl Iterator<Item = ClientMessages>;
     fn send_message(&self, message_type: NetworkMessageType, message: &ServerMessages);
     fn disconnect(&self);
+    fn test() -> Self;
 }

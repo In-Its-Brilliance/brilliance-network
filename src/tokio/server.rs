@@ -108,8 +108,12 @@ async fn connection_writer_task(
 }
 
 impl IServerNetwork<TokioServerConnection> for TokioServer {
-    async fn new(ip_port: String) -> Self {
-        let listener = TcpListener::bind(&ip_port).await.unwrap();
+    type Error = String;
+
+    async fn new(ip_port: String) -> Result<Self, Self::Error> {
+        let listener = TcpListener::bind(&ip_port)
+            .await
+            .map_err(|err| err.to_string())?;
         log::info!(target: "network", "TCP server listening on {}", ip_port);
 
         let (new_conn_tx, new_conn_rx) = flume::unbounded();
@@ -130,13 +134,13 @@ impl IServerNetwork<TokioServerConnection> for TokioServer {
             }
         });
 
-        Self {
+        Ok(Self {
             new_connections_rx: new_conn_rx,
             connections: Arc::new(RwLock::new(HashMap::new())),
             channel_connections: flume::unbounded(),
             channel_errors: flume::unbounded(),
             next_client_id: AtomicU64::new(1),
-        }
+        })
     }
 
     async fn step(&self, _delta: Duration) {
@@ -290,6 +294,20 @@ impl IServerConnection for TokioServerConnection {
         let mut disconnect_at = self.disconnect_at.write();
         if disconnect_at.is_none() {
             *disconnect_at = Some(Instant::now() + Duration::from_millis(200));
+        }
+    }
+
+    fn test() -> Self {
+        let (_client_messages_tx, client_messages_rx) = flume::unbounded();
+        let (outgoing_tx, _outgoing_rx) = flume::unbounded();
+
+        Self {
+            client_id: 1,
+            ip: "127.0.0.1:test".to_string(),
+            connected: Arc::new(AtomicBool::new(true)),
+            disconnect_at: Arc::new(RwLock::new(None)),
+            channel_client_messages: client_messages_rx,
+            channel_outgoing: outgoing_tx,
         }
     }
 }

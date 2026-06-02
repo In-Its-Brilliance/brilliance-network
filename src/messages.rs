@@ -3,6 +3,7 @@ use common::chunks::block_position::BlockPosition;
 use common::chunks::chunk_data::BlockDataInfo;
 use common::chunks::chunk_data::{BlockIndexType, ChunkData};
 use common::chunks::chunk_position::ChunkPosition;
+use common::commands::complitions::{CompleteRequest, CompleteResponse};
 use common::chunks::position::Vector3;
 use common::chunks::rotation::Rotation;
 use common::inventory::inventory::{ClientInventory, InventoryType};
@@ -25,6 +26,7 @@ pub enum ClientMessages {
     ConsoleInput {
         command: String,
     },
+    ConsoleCompleteRequest(CompleteRequest),
     PlayerMove {
         position: Vector3,
         rotation: Rotation,
@@ -60,26 +62,14 @@ pub enum InventoryAction {
 
         amount: u16,
     },
-    Swap {
-        a_inventory: InventoryType,
-        a_slot: u16,
-
-        b_inventory: InventoryType,
-        b_slot: u16,
-    },
-    Split {
-        from_inventory: InventoryType,
-        from_slot: u16,
-
-        to_inventory: InventoryType,
-        to_slot: u16,
-
-        amount: u16,
-    },
     Drop {
         inventory: InventoryType,
         slot: u16,
         amount: u16,
+    },
+    QuickAction {
+        from_inventory: InventoryType,
+        from_slot: u16,
     },
     Close {
         inventory: InventoryType,
@@ -101,9 +91,12 @@ pub struct ResurceScheme {
 #[strum(serialize_all = "kebab-case")]
 pub enum ServerMessages {
     AllowConnection,
+
     ConsoleOutput {
         message: String,
     },
+    ConsoleCompleteResponse(CompleteResponse),
+
     Disconnect {
         message: Option<String>,
     },
@@ -124,7 +117,7 @@ pub enum ServerMessages {
         chunks_distance: u16,
     },
 
-    SpawnWorld {
+    SpawnWorldPending {
         world_slug: String,
     },
     UpdatePlayerComponent {
@@ -200,12 +193,10 @@ pub struct InventorySlotChange {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum InventoryStream {
-    // Not sended in case of PlayerPersonal, its always streaming to the player
     StartStream {
         inventory_type: InventoryType,
         inventory: ClientInventory,
     },
-    // Not sended in case of PlayerPersonal, its always streaming to the player
     StopStream {
         inventory_type: InventoryType,
     },

@@ -164,7 +164,7 @@ impl IClientNetwork for TokioClient {
             });
         }
 
-        log::info!(target: "network", "Connected to {}", addr);
+        log::info!(target: "network", "&uConnected to &d{}", addr);
 
         Ok(Self {
             connected,

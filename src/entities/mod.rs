@@ -1,3 +1,6 @@
+use std::collections::HashMap;
+
+use common::inventory::item::BodyPart;
 use entity_tag::EntityTagData;
 use serde::{Deserialize, Serialize};
 
@@ -42,7 +45,7 @@ impl AnimationState {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum EntitySkinData {
-    Generic,
+    Generic { body_parts: HashMap<BodyPart, String> },
     Fixed(String),
     None,
 }
