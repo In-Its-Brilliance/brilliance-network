@@ -159,7 +159,7 @@ impl IClientNetwork for RenetClientNetwork {
 
         for channel_type in ServerChannel::iter() {
             while let Some(server_message) = client.receive_message(channel_type) {
-                let decoded: ServerMessages = match bincode::deserialize(&server_message) {
+                let decoded: ServerMessages = match postcard::from_bytes(&server_message) {
                     Ok(d) => d,
                     Err(e) => {
                         self.send_network_error(format!("message decode error: {}", e.to_string()));
@@ -187,7 +187,7 @@ impl IClientNetwork for RenetClientNetwork {
 
     fn send_message(&self, message_type: NetworkMessageType, message: &ClientMessages) {
         // log::info!(target: "network", "client send_message message:{}", message);
-        let encoded = bincode::serialize(message).unwrap();
+        let encoded = postcard::to_allocvec(message).unwrap();
         let msg = (RenetClientNetwork::map_type_channel(message_type).into(), encoded);
         self.network_client_sended.0.send(msg).unwrap();
     }

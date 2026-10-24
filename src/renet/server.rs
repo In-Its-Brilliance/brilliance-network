@@ -110,7 +110,7 @@ impl IServerNetwork<RenetServerConnection> for RenetServerNetwork {
         for connection in connections.values() {
             for channel_type in ClientChannel::iter() {
                 while let Some(client_message) = server.receive_message(connection.client_id, channel_type) {
-                    let decoded: ClientMessages = match bincode::deserialize(&client_message) {
+                    let decoded: ClientMessages = match postcard::from_bytes(&client_message) {
                         Ok(d) => d,
                         Err(e) => {
                             log::error!(target: "renet", "Decode client {} message error: {}", channel_type, e);
@@ -217,7 +217,7 @@ impl IServerConnection for RenetServerConnection {
     }
 
     fn send_message(&self, message_type: NetworkMessageType, message: &ServerMessages) {
-        let encoded = bincode::serialize(message).unwrap();
+        let encoded = postcard::to_allocvec(message).unwrap();
         let mut server = self.server.as_ref().write().expect("poisoned");
         server.send_message(
             self.client_id,

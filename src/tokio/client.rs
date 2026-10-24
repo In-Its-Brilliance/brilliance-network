@@ -39,7 +39,7 @@ async fn client_reader_task(
         match read_frame(&mut buf_reader).await {
             Ok(data) if data.is_empty() => continue,
             Ok(data) => match data[0] {
-                FRAME_MESSAGE => match bincode::deserialize::<ServerMessages>(&data[1..]) {
+                FRAME_MESSAGE => match postcard::from_bytes::<ServerMessages>(&data[1..]) {
                     Ok(msg) => {
                         if tx.send(msg).is_err() {
                             break;
@@ -222,7 +222,7 @@ impl IClientNetwork for TokioClient {
             return;
         }
         let mut frame = vec![FRAME_MESSAGE];
-        frame.extend(bincode::serialize(message).unwrap());
+        frame.extend(postcard::to_allocvec(message).unwrap());
         self.outgoing_messages.0.send(frame).ok();
     }
 
