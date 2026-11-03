@@ -30,8 +30,6 @@ pub enum ClientMessages {
     PlayerMove {
         position: Vector3,
         rotation: Rotation,
-        /// Client process frame when this movement snapshot was sampled.
-        frame: u64,
         animation_state: AnimationState,
 
         /// Movement direction and horizontal speed relative to the character's facing.
@@ -39,6 +37,13 @@ pub enum ClientMessages {
 
         /// Angular turn speed in radians per second.
         standing_turn_rate: f32,
+
+        /// Client process frame when this movement snapshot was sampled.
+        frame: u64,
+    },
+    PlayerEvent {
+        event: String,
+        frame: u64,
     },
     ChunkRecieved {
         chunk_positions: Vec<ChunkPosition>,
@@ -182,6 +187,12 @@ pub enum ServerMessages {
         standing_turn_rate: Option<f32>,
         /// Server time in seconds since startup
         timestamp: f64,
+    },
+    EntityEvent {
+        world_slug: String,
+        id: u32,
+        event: String,
+        frame: u64,
     },
 
     EditBlock {
