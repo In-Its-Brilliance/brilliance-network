@@ -109,7 +109,13 @@ async fn run_server(args: Args) {
 
             for msg in conn.drain_client_messages() {
                 match msg {
-                    ClientMessages::PlayerMove { position, rotation } => {
+                    ClientMessages::PlayerMove {
+                        position,
+                        rotation,
+                        animation_state,
+                        movement_relative_to_facing,
+                        standing_turn_rate,
+                    } => {
                         count_this_tick += 1;
                         let seq = position.x as u64; // sequence закодирован в position.x
                         recv_timestamps.push(now);
@@ -123,6 +129,9 @@ async fn run_server(args: Args) {
                                 id: 1,
                                 position,
                                 rotation,
+                                animation_state,
+                                movement_relative_to_facing: Some(movement_relative_to_facing),
+                                standing_turn_rate: Some(standing_turn_rate),
                                 timestamp: tick_start.elapsed().as_secs_f32(),
                             },
                         );

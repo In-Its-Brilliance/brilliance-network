@@ -31,6 +31,12 @@ pub enum ClientMessages {
         position: Vector3,
         rotation: Rotation,
         animation_state: AnimationState,
+
+        /// Movement direction and horizontal speed relative to the character's facing.
+        movement_relative_to_facing: (f32, f32),
+
+        /// Angular turn speed in radians per second.
+        standing_turn_rate: f32,
     },
     ChunkRecieved {
         chunk_positions: Vec<ChunkPosition>,
@@ -168,6 +174,10 @@ pub enum ServerMessages {
         position: Vector3,
         rotation: Rotation,
         animation_state: AnimationState,
+        /// Movement direction and horizontal speed relative to the character's facing.
+        movement_relative_to_facing: Option<(f32, f32)>,
+        /// Angular turn speed in radians per second.
+        standing_turn_rate: Option<f32>,
         /// Server time in seconds since startup
         timestamp: f64,
     },
