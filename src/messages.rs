@@ -30,6 +30,8 @@ pub enum ClientMessages {
     PlayerMove {
         position: Vector3,
         rotation: Rotation,
+        /// Client process frame when this movement snapshot was sampled.
+        frame: u64,
         animation_state: AnimationState,
 
         /// Movement direction and horizontal speed relative to the character's facing.

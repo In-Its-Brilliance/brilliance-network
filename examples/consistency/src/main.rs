@@ -2,6 +2,7 @@ use clap::Parser;
 use log::LevelFilter;
 use network::{
     client::IClientNetwork,
+    entities::AnimationState,
     messages::{ClientMessages, NetworkMessageType, ServerMessages},
     server::{ConnectionMessages, IServerConnection, IServerNetwork},
     NetworkClient, NetworkServer, NetworkServerConnection,
@@ -112,12 +113,13 @@ async fn run_server(args: Args) {
                     ClientMessages::PlayerMove {
                         position,
                         rotation,
+                        frame,
                         animation_state,
                         movement_relative_to_facing,
                         standing_turn_rate,
                     } => {
                         count_this_tick += 1;
-                        let seq = position.x as u64; // sequence закодирован в position.x
+                        let seq = frame;
                         recv_timestamps.push(now);
                         recv_sequences.push(seq);
 
@@ -315,6 +317,10 @@ async fn run_client(args: Args) {
                         z: 0.0,
                     },
                     rotation: common::chunks::rotation::Rotation::new(0.0, 0.0),
+                    frame: sequence,
+                    animation_state: AnimationState::Idle,
+                    movement_relative_to_facing: (0.0, 0.0),
+                    standing_turn_rate: 0.0,
                 };
                 client.send_message(NetworkMessageType::Unreliable, &msg);
                 total_sent += 1;
